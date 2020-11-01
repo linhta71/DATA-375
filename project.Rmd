@@ -1,0 +1,24 @@
+---
+title: "project375"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+```
+
+
+```{r}
+credit <- read_csv("https://docs.google.com/spreadsheets/d/1jFkOKgD5NGeD8mDj_42oBNJfFVK42-1cMKk0JxVFxeA/gviz/tq?tqx=out:csv")
+```
+```{r}
+glimpse(credit)
+```
+```{r}
+credit <-  credit %>% mutate_if(is.character, as.factor)
+glimpse(credit)
+```
+
