@@ -62,15 +62,53 @@ Validate tree before pruning
 credit_tree_70_pred = predict(credit_tree_70, newdata = test_70_features)
 pred_output_70_good = (credit_tree_70_pred[, "bad"] < 0.5)
 test_target_good = test_70_target == "good"
-credit_70_mse = mean(test_target_good != pred_output_70_good)
+(credit_70_mse = mean(test_target_good != pred_output_70_good))
 ```
 
 ```{r}
+# detach('package:MASS', unload = TRUE)
 # do this many times
 # rate error of decision tree ()
 times = 10
-error_vect = as.numeric(length=times)
+p = 0.7
+dec_tree_error_vect = as.numeric(times)
+log_err_vect = as.numeric(times)
+for(i in 1:times) {
+  training_idx = createDataPartition(credit$class, p = p, list = F)
+  training = credit[training_idx,]
+  test_feats = credit[-training_idx, !(colnames(credit) %in% c('class'))]
+  test_class = credit[-training_idx, 'class']
+  dec_tree = rpart(class ~ . , data = training)
+  fname = sprintf("dec_tree_%d.jpeg", i)
+  jpeg(filename=fname, width=1920, height=1080)
+  rpart.plot(dec_tree)
+  dev.off()
+  # test
+  dec_tree_pred = predict(dec_tree, newdata = test_feats)
+  predict_good = dec_tree_pred[, "bad"] < 0.5
+  test_good = test_class == "good"
+  dec_tree_error_vect[i] = mean(predict_good != test_good)
+  
+  # logistic regression
+  log_model = glm(class ~ . , family = "binomial", data = training)
+  log_pred = predict(log_model, newdata = test_feats, type = "response")
+  log_pred = log_pred >= 0.5
+  log_err_vect[i] = mean(log_pred != test_good)
+}
+```
+```{r}
+# visualization
+dec_tree_error_vect
+log_err_vect
+par(mfrow=c(1,2))
+(dec_tree_err = mean(dec_tree_error_vect))
+(log_tree_err = mean(log_err_vect))
 
+plot(1:length(dec_tree_error_vect), dec_tree_error_vect, type = "l", main = "decision tree err")
+abline(h = dec_tree_err)
+plot(1:length(log_err_vect), log_err_vect, type = "l", main = "logistic err")
+abline(h=log_tree_err)
+# attach("package:MASS")
 ```
 
 
