@@ -1,0 +1,141 @@
+---
+title: "project 467"
+output:
+  pdf_document: default
+  html_document: default
+---
+load packages
+```{r}
+library(tidyverse)
+library(caret)
+library(MuMIn)
+```
+
+load data file
+```{r}
+df <- read.csv("C:/Users/Lynn/Desktop/DATA 467/diamond_quality.csv", header = TRUE)
+```
+1. Summary of all the variable
+Null -> not factor variable
+```{r}
+glimpse(df)
+sapply(df[sapply(df, class) == "character"], unique)
+diamond <- df %>% mutate_if(is.character, as.factor)
+diamond$Carat.Size <- df$ï..Carat.Size
+diamond <- diamond[, -1]
+glimpse(diamond)
+```
+2. Multiple linear regression model 
+5%
+```{r}
+whole_regression <- lm(Price~., data = diamond)
+reduced_regression <-  lm(Price~Carat.Size+Cut+Depth+Clarity+Color, data = diamond)
+extra_reduced_regression <- lm(Price~Carat.Size+Cut+Clarity+Color, data = diamond)
+summary(whole_regression)
+summary(reduced_regression)
+summary(extra_reduced_regression)
+```
+Report, Table
+
+3. comparing between models.
+```{r}
+anova(whole_regression, reduced_regression)
+```
+H0: all Bi = 0
+HA: at least 1 Bi != 0
+Bi is the slope of each variable that we leave out.
+p val >5% ==> fail to reject H0==> those left out variables are not significant. The reduced model is better than the full model.
+```{r}
+anova(extra_reduced_regression, whole_regression)
+```
+
+
+pval<5% ==> Not enough evidence to state that Depth is a significant predictor.
+
+
+
+
+4. BAckward criterion
+```{r}
+n = length(resid(whole_regression))
+diamond_back_bic = step(whole_regression, distraction = "backward", k = log(n))
+```
+THis indicates that the reduced model that we made is correct.
+5. Inference
+```{r}
+plot(Price~Color,diamond)
+plot(Price~Clarity, diamond)
+plot(Price~Depth, diamond)
+plot(Price~Cut, diamond)
+plot(Price~Carat.Size, diamond)
+plot(Price~Table,diamond)
+plot(Price~Report, diamond)
+
+```
+
+** Check if Depth is a significant predictor for Price.
+```{r}
+DvsP <- lm(Price~Depth, diamond)
+summary(DvsP)
+null <- lm(Price~1, diamond)
+anova(null, DvsP)
+```
+Depth is not a significant predictor.
+pvalue is too larger ==> not efficient. Depth is insignificant. the model with depth is not different from the null model.
+
+** Check if Cut is a significant predictor for price
+```{r}
+CvsP <- lm(Price~Cut, diamond)
+anova(CvsP)
+```
+==> not affect the Price that much.
+
+** Check of Color is significant predictor.
+```{r}
+ColorvsP <- lm(Price~ Color, diamond)
+anova(ColorvsP)
+```
+==> very effective 
+
+** Check of Clarity is significant predictor.
+```{r}
+ClarityvsP <- lm(Price~ Clarity, diamond)
+anova(ClarityvsP)
+```
+==> significant
+
+**CHeck if Carat Size is significant
+```{r}
+SizevsP <- lm(Price~ Carat.Size, diamond)
+anova(SizevsP)
+cor(diamond$Price, diamond$Carat.Size)
+```
+
+** Check if Table is significant predictor for price
+```{r}
+Tablevsp <- lm(Price~Table, diamond)
+summary(Tablevsp)
+```
+
+** Check if Report is significant predictor for Price
+```{r}
+RvsP <- lm(Price~Report, diamond)
+anova(RvsP)
+```
+```{r}
+summary(reduced_regression)$coefficients
+```
+
+6. WEight
+```{r}
+summary(reduced_regression)
+unique(diamond$Color)
+unique(diamond$Cut)
+unique(diamond$Clarity)
+```
+
+
+
+
+
+
