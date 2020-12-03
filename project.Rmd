@@ -18,12 +18,25 @@ library(jpeg)   # high-quality plotting
 ```{r}
 credit <- read_csv("https://docs.google.com/spreadsheets/d/1jFkOKgD5NGeD8mDj_42oBNJfFVK42-1cMKk0JxVFxeA/gviz/tq?tqx=out:csv")
 ```
+
 ```{r}
 glimpse(credit)
 ```
+
 ```{r}
 credit <-  credit %>% mutate_if(is.character, as.factor)
 glimpse(credit)
+doubcount = 0
+for (i in credit) {
+  if (typeof(i)=="double") {
+    doubcount = doubcount+1
+  }
+}
+doubcount
+```
+1.Summary data set
+```{r}
+summary(credit)
 ```
 
 ```{r}
@@ -122,3 +135,35 @@ dev.off()
 ```
 
 ![credit_70_tree_pruned](credit_70_pruned.jpeg)
+2. Backward criterion
+```{r}
+full_mod <- glm(class~., family = "binomial", credit)
+summary(full_mod)
+```
+
+```{r}
+library(MASS)
+step.model <- full_mod %>% stepAIC(trace = FALSE)
+step.model$anova
+```
+2. Random forest
+```{r}
+split_index2 <- createDataPartition(credit$class, p = 0.8, list = F)
+training2 <- credit[split_index2,]
+features_test2 <- credit[-split_index2, !(colnames(credit) %in% c('class'))]
+target_test2 <- credit[-split_index2, 'class']
+sqrt(20)
+
+rf_train <- randomForest(class~., data= training2, mtry = 5)
+importance(rf_train)[order(importance(rf_train), decreasing = TRUE),]
+
+```
+
+```{r}
+rf_preds <- predict(rf_train, newdata = features_test2)
+rf_error_rate <- mean(rf_preds != target_test2$class)
+rf_error_rate
+```
+
+
+
